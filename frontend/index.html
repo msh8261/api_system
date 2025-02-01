@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat with Groq LLM</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        #messages {
+            border: 1px solid #ccc;
+            padding: 10px;
+            height: 300px;
+            overflow-y: auto;
+        }
+        input[type="text"] {
+            width: 80%;
+            padding: 10px;
+        }
+        button {
+            padding: 10px;
+            cursor: pointer;
+        }
+        .message {
+            margin: 5px 0;
+        }
+        .user-message {
+            color: blue;
+        }
+        .bot-message {
+            color: green;
+        }
+        button.logout {
+            background-color: red;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>Chat with Groq LLM</h1>
+    
+    <!-- Login Form -->
+    <div id="login-form">
+        <h2>Login</h2>
+        <input type="text" id="username" placeholder="Username" /><br><br>
+        <input type="password" id="password" placeholder="Password" /><br><br>
+        <button onclick="login()">Login</button>
+        <p id="login-error" style="color: red;"></p>
+    </div>
+
+    <!-- Chat Interface -->
+    <div id="chat-interface" style="display: none;">
+        <h2>Chat</h2>
+        <div id="messages"></div>
+        <input type="text" id="user-input" placeholder="Type your message here..." />
+        <button onclick="sendMessage()">Send</button>
+        <button class="logout" onclick="logout()">Logout</button>
+    </div>
+
+    <script>
+        let ws;
+        let token = '';
+        const apiUrl = window.location.hostname === 'localhost' ? "http://localhost:8022" : "https://app:8022"; // Use the correct hostname based on the environment
+
+        // Login Function
+        async function login() {
+            const username = document.getElementById("username").value;
+            const password = document.getElementById("password").value;
+            
+            console.log("Attempting to login with:", { username, password }); // Debugging information
+
+            try {
+                const response = await fetch(`${apiUrl}/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log("Login response data:", data); // Debugging information
+
+                if (data.access_token) {
+                    token = data.access_token;
+                    document.getElementById("login-form").style.display = "none";
+                    document.getElementById("chat-interface").style.display = "block";
+                    openWebSocket(); // Connect to WebSocket once logged in
+                } else {
+                    document.getElementById("login-error").innerText = "Invalid login credentials";
+                }
+            } catch (error) {
+                console.error("Error during login:", error);
+                document.getElementById("login-error").innerText = "Login failed, please try again.";
+            }
+        }
+
+        // Open WebSocket connection
+        function openWebSocket() {
+            const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            ws = new WebSocket(`${wsProtocol}//${window.location.hostname === 'localhost' ? 'localhost' : 'app'}:8022/ws?token=${token}`);
+
+            ws.onopen = () => {
+                console.log("WebSocket connection opened");
+            };
+
+            ws.onmessage = (event) => {
+                console.log("Received message from WebSocket:", event.data); 
+                const response = JSON.parse(event.data);
+                displayMessage(response, 'bot');
+            };
+
+            ws.onerror = (error) => {
+                console.error("WebSocket error:", error);
+            };
+
+            ws.onclose = () => {
+                console.log("WebSocket connection closed");
+            };
+        }
+
+        // Send Message via WebSocket
+        function sendMessage() {
+            const userInput = document.getElementById("user-input").value;
+            if (userInput) {
+                displayMessage({ content: userInput }, 'user');
+                ws.send(userInput);
+                document.getElementById("user-input").value = "";
+            }
+        }
+
+        // Display Message in the chat window
+        function displayMessage(message, sender) {
+            const messagesDiv = document.getElementById("messages");
+            const messageDiv = document.createElement("div");
+            messageDiv.classList.add("message", sender + "-message");
+            messageDiv.textContent = message.content;
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight; // Scroll to bottom
+        }
+
+        // Logout Function
+        function logout() {
+            token = '';
+            ws.close();
+            document.getElementById("chat-interface").style.display = "none";
+            document.getElementById("login-form").style.display = "block";
+        }
+    </script>
+</body>
+</html>
+
