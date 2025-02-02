@@ -15,6 +15,7 @@ import requests
 import asyncio
 import json
 import groq
+from traceback import format_exc
 from pydantic import BaseModel
 from fastapi import BackgroundTasks
 from fastapi import FastAPI, WebSocket, Depends, HTTPException, Request, Body
@@ -23,14 +24,15 @@ from fastapi.security import OAuth2PasswordBearer
 from fastapi import WebSocketDisconnect
 from jose import JWTError, jwt
 from dotenv import load_dotenv
-from backend.log import logger
+from log import logger
 from backend.utils.redis_cache import (
     get_cached_response,
     set_cached_response,
 )  # Correct function names
 from backend.utils.kafka_producer import send_message_to_kafka
 from backend.utils.kafka_producer import send_message_to_kafka_v1
-from backend.routers.users import login  # Import login function
+from backend.routers.users import login, register
+from backend.database import get_db, Session
 from pydantic import BaseModel
 from backend.database import init_db
 
@@ -57,32 +59,6 @@ app.add_middleware(
 )
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
-
-
-class LoginRequest(BaseModel):
-    username: str
-    password: str
-
-
-@app.post("/login")
-async def login_endpoint(request: LoginRequest):
-    """
-    Login endpoint to authenticate users.
-
-    Args:
-        request (LoginRequest): The request containing the user's credentials.
-
-    Returns:
-        dict: The authentication response.
-    """
-    try:
-        logger.debug(f"Login request received: {request}")
-        response = login(request)
-        logger.debug(f"Login response: {response}")
-        return response
-    except Exception as e:
-        logger.error(f"Error in login endpoint: {e}")
-        raise HTTPException(status_code=500, detail="Failed to process login request")
 
 
 async def get_groq_response(prompt: str):
@@ -198,16 +174,55 @@ async def websocket_endpoint(websocket: WebSocket, background_tasks: BackgroundT
         await websocket.close()
 
 
-@app.get("/")
-def read_root():
-    return {"message": "Backend server is running"}
+class LoginRequest(BaseModel):
+    username: str
+    password: str
 
+
+@app.post("/login")
+async def login_endpoint(request: LoginRequest):
+    """
+    Login endpoint to authenticate users.
+
+    Args:
+        request (LoginRequest): The request containing the user's credentials.
+
+    Returns:
+        dict: The authentication response.
+    """
+    try:
+        logger.debug(f"Login request received: {request}")
+        response = login(request)
+        logger.debug(f"Login response: {response}")
+        return response
+    except Exception as e:
+        logger.error(f"Error in login endpoint: {e}")
+        raise HTTPException(status_code=500, detail="Failed to process login request")
+
+
+@app.post("/register")
+def register_endpoint(request: LoginRequest, db: Session = Depends(get_db)):
+    try:
+        logger.debug(f"Register request received: {request}")
+        response = register(request, db)
+        logger.debug(f"Register response: {response}")
+        return response
+    except Exception as e:
+        logger.error(
+            f"Error in Register endpoint: {str(e)}\n{format_exc()}"
+        )  # Capture full error traceback
+        raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
 
 
 @app.on_event("startup")
 def startup():
     # Initialize the database
     init_db()
+
+
+@app.get("/")
+def read_root():
+    return {"message": "Backend server is running"}
 
 
 if __name__ == "__main__":

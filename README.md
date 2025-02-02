@@ -55,3 +55,57 @@ Your chatbot system can be broken into the following services:
 - **Authentication:** OAuth2, JWT
 - **Containerization & Deployment:** Docker, Kubernetes
 
+# System Folder Structure
+
+This document provides an overview of the folder structure and files within the `system` folder.
+
+## Folder Structure
+
+```
+system/
+├── backend/
+│   ├── __init__.py
+│   ├── main.py
+│   ├── database.py
+│   ├── log.py
+│   ├── routers/
+│   │   ├── __init__.py
+│   │   ├── users.py
+│   ├── utils/
+│   │   ├── __init__.py
+│   │   ├── kafka_producer.py
+│   │   ├── redis_cache.py
+├── frontend/
+│   ├── index.html
+├── docker-compose.yml
+├── .env
+```
+
+## Description of Files and Folders
+
+### backend/
+Contains the backend code for the application.
+
+- `__init__.py`: Marks the directory as a Python package.
+- `main.py`: The main entry point for the backend application.
+- `database.py`: Contains database initialization code.
+- `log.py`: Contains logging configuration.
+- `routers/`: Contains route handlers.
+  - `__init__.py`: Marks the directory as a Python package.
+  - `users.py`: Contains user-related routes.
+- `utils/`: Contains utility functions and modules.
+  - `__init__.py`: Marks the directory as a Python package.
+  - `kafka_producer.py`: Contains functions to send messages to Kafka.
+  - `redis_cache.py`: Contains functions to interact with Redis cache.
+
+### frontend/
+Contains the frontend code for the application.
+
+- `index.html`: The main HTML file for the frontend.
+
+### docker-compose.yml
+Defines the Docker services, networks, and volumes for the application.
+
+### .env
+Contains environment variables for the application.
+

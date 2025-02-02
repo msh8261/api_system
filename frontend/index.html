@@ -15,7 +15,7 @@
             height: 300px;
             overflow-y: auto;
         }
-        input[type="text"] {
+        input[type="text"], input[type="password"] {
             width: 80%;
             padding: 10px;
         }
@@ -48,6 +48,17 @@
         <input type="password" id="password" placeholder="Password" /><br><br>
         <button onclick="login()">Login</button>
         <p id="login-error" style="color: red;"></p>
+        <p>Don't have an account? <a href="javascript:void(0);" onclick="showRegisterForm()">Register</a></p>
+    </div>
+
+    <!-- Register Form -->
+    <div id="register-form" style="display: none;">
+        <h2>Register</h2>
+        <input type="text" id="register-username" placeholder="Username" /><br><br>
+        <input type="password" id="register-password" placeholder="Password" /><br><br>
+        <button onclick="register()">Register</button>
+        <p id="register-error" style="color: red;"></p>
+        <p>Already have an account? <a href="javascript:void(0);" onclick="showLoginForm()">Login</a></p>
     </div>
 
     <!-- Chat Interface -->
@@ -64,13 +75,54 @@
         let token = '';
         const apiUrl = window.location.hostname === 'localhost' ? "http://localhost:8022" : "https://app:8022"; // Use the correct hostname based on the environment
 
+        // Switch to Register Form
+        function showRegisterForm() {
+            document.getElementById("login-form").style.display = "none";
+            document.getElementById("register-form").style.display = "block";
+        }
+
+        // Switch to Login Form
+        function showLoginForm() {
+            document.getElementById("register-form").style.display = "none";
+            document.getElementById("login-form").style.display = "block";
+        }
+
+        // Register Function
+        async function register() {
+            const username = document.getElementById("register-username").value;
+            const password = document.getElementById("register-password").value;
+
+            try {
+                const response = await fetch(`${apiUrl}/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                if (data.message === 'User created successfully') {
+                    document.getElementById("register-error").innerText = "Registration successful, please login.";
+                    showLoginForm(); // Show login after successful registration
+                } else {
+                    document.getElementById("register-error").innerText = "Registration failed, please try again.";
+                }
+            } catch (error) {
+                console.error("Error during registration:", error);
+                document.getElementById("register-error").innerText = "Registration failed, please try again.";
+            }
+        }
+
         // Login Function
         async function login() {
             const username = document.getElementById("username").value;
             const password = document.getElementById("password").value;
             
-            console.log("Attempting to login with:", { username, password }); // Debugging information
-
             try {
                 const response = await fetch(`${apiUrl}/login`, {
                     method: 'POST',
@@ -85,8 +137,6 @@
                 }
 
                 const data = await response.json();
-                console.log("Login response data:", data); // Debugging information
-
                 if (data.access_token) {
                     token = data.access_token;
                     document.getElementById("login-form").style.display = "none";
@@ -140,15 +190,13 @@
             const messagesDiv = document.getElementById("messages");
             const messageDiv = document.createElement("div");
             messageDiv.classList.add("message", sender + "-message");
-            
-            // If message is a string (content), use it directly. Otherwise, extract content.
+
             const messageContent = (typeof message === "string") ? message : message.content;
 
-            messageDiv.textContent = messageContent;  // Use the correct content
+            messageDiv.textContent = messageContent;
             messagesDiv.appendChild(messageDiv);
             messagesDiv.scrollTop = messagesDiv.scrollHeight; // Scroll to bottom
         }
-
 
         // Logout Function
         function logout() {
@@ -160,4 +208,3 @@
     </script>
 </body>
 </html>
-

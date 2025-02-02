@@ -12,7 +12,7 @@ sys.path.insert(0, parent_dir_path)
 
 import redis
 from dotenv import load_dotenv
-from backend.log import logger
+from log import logger
 
 # Load environment variables from .env file
 load_dotenv()

@@ -14,7 +14,7 @@ sys.path.insert(0, parent_dir_path)
 from kafka import KafkaProducer
 import json
 from dotenv import load_dotenv
-from backend.log import logger
+from log import logger
 from aiokafka import AIOKafkaProducer
 import asyncio
 
