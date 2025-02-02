@@ -32,6 +32,7 @@ from backend.utils.kafka_producer import send_message_to_kafka
 from backend.utils.kafka_producer import send_message_to_kafka_v1
 from backend.routers.users import login  # Import login function
 from pydantic import BaseModel
+from backend.database import init_db
 
 # Load environment variables from .env file
 load_dotenv()
@@ -200,6 +201,13 @@ async def websocket_endpoint(websocket: WebSocket, background_tasks: BackgroundT
 @app.get("/")
 def read_root():
     return {"message": "Backend server is running"}
+
+
+
+@app.on_event("startup")
+def startup():
+    # Initialize the database
+    init_db()
 
 
 if __name__ == "__main__":
