@@ -25,7 +25,7 @@ mysql_conn = pymysql.connect(
     host=os.getenv("MYSQL_HOST", "localhost"),
     user=os.getenv("MYSQL_USER", "root"),
     password=os.getenv("MYSQL_PASSWORD", ""),
-    database=os.getenv("MYSQL_DB", "chatbot")
+    database=os.getenv("MYSQL_DB", "chatbot"),
 )
 logger.info("MySQL connection established")
 

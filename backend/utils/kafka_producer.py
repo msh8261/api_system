@@ -15,16 +15,22 @@ from kafka import KafkaProducer
 import json
 from dotenv import load_dotenv
 from backend.log import logger
+from aiokafka import AIOKafkaProducer
+import asyncio
 
 # Load environment variables from .env file
 load_dotenv()
 
 
-bootstrap_servers=os.getenv("KAFKA_BROKER", 'localhost:9092, localhost:9093').split(',')
+bootstrap_servers = os.getenv("KAFKA_BROKER", "localhost:9092, localhost:9093").split(
+    ","
+)
 
-# Messages will be serialized as JSON 
+
+# Messages will be serialized as JSON
 def serializer(message):
     return json.dumps(message).encode()
+
 
 def setup_producer():
     """
@@ -32,20 +38,19 @@ def setup_producer():
     Parameters:
     Returns:
     - KafkaProducer instance.
-    """    
+    """
     try:
         producer = KafkaProducer(
-            bootstrap_servers=bootstrap_servers,
-            value_serializer=serializer
+            bootstrap_servers=bootstrap_servers, value_serializer=serializer
         )
         return producer
     except Exception as e:
-        if e == 'NoBrokersAvailable':
-            print('waiting for brokers to become available')
-        return 'not-ready'
+        if e == "NoBrokersAvailable":
+            print("waiting for brokers to become available")
+        return "not-ready"
 
 
-def send_message(topic, messages):
+def send_message_to_kafka(topic, messages):
     """
     Send masseges to a topic by producer.
     Args:
@@ -68,3 +73,19 @@ def send_message(topic, messages):
             f"Failed to send messages \
                             topic '{topic}'."
         )
+
+
+# Asynchronous function to send message to Kafka
+async def send_message_to_kafka_v1(topic: str, message: str):
+    # Create an instance of the producer
+    producer = AIOKafkaProducer(bootstrap_servers=bootstrap_servers)
+
+    # Start the producer
+    await producer.start()
+
+    try:
+        # Send the message to the Kafka topic
+        await producer.send_and_wait(topic, message.encode())
+    finally:
+        # Stop the producer after sending the message
+        await producer.stop()

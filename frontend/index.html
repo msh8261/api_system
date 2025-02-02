@@ -140,10 +140,15 @@
             const messagesDiv = document.getElementById("messages");
             const messageDiv = document.createElement("div");
             messageDiv.classList.add("message", sender + "-message");
-            messageDiv.textContent = message.content;
+            
+            // If message is a string (content), use it directly. Otherwise, extract content.
+            const messageContent = (typeof message === "string") ? message : message.content;
+
+            messageDiv.textContent = messageContent;  // Use the correct content
             messagesDiv.appendChild(messageDiv);
             messagesDiv.scrollTop = messagesDiv.scrollHeight; // Scroll to bottom
         }
+
 
         // Logout Function
         function logout() {

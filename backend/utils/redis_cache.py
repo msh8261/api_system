@@ -17,27 +17,29 @@ from backend.log import logger
 # Load environment variables from .env file
 load_dotenv()
 
-redis_client = redis.Redis(host=os.getenv("REDIS_HOST", "localhost"), 
-                port=os.getenv("REDIS_PORT", 6379), 
-                db=0)
+redis_client = redis.Redis(
+    host=os.getenv("REDIS_HOST", "localhost"), port=os.getenv("REDIS_PORT", 6379), db=0
+)
+
 
 def get_cached_response(key):
     """
     Retrieve a cached response from Redis.
-    
+
     Args:
         key (str): The key for the cached response.
-    
+
     Returns:
         str: The cached response if it exists, otherwise None.
     """
     logger.info(f"Fetching cached response for key: {key}")
     return redis_client.get(key)
 
+
 def set_cached_response(key, value, ttl=300):
     """
     Set a response in the Redis cache.
-    
+
     Args:
         key (str): The key for the cached response.
         value (str): The response to cache.
