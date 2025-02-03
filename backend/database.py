@@ -49,7 +49,6 @@ engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
-
 def get_mongo_db():
     """
     Get a MongoDB database connection.
@@ -61,6 +60,7 @@ def get_mongo_db():
         yield db
     finally:
         client.close()
+
 
 # create model
 class User(Base):

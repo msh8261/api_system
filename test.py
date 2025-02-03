@@ -165,7 +165,7 @@ print(login({"username": "test_user", "password": "test123"}))
 print(register({"username": "user1", "password": "user1"}))
 
 
-'''
+"""
 Challenges & Solutions
 High Latency in AI Model Response
 
@@ -190,4 +190,4 @@ Solution: Deployed using Docker & Kubernetes, set up NGINX for load balancing, a
 Final Outcome
 The API handled thousands of concurrent users efficiently, reduced response latency, and ensured scalability & security. The system was deployed in a microservices architecture, allowing independent scaling of different components.
 
-'''
+"""
