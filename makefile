@@ -9,4 +9,4 @@ test_chat:
   -d '{"message": "Hello"}'
 
 test_register:
-  docker exec -it app curl -X POST "http://localhost:8022/register" -H "Content-Type: application/json" -d "{\"username\": \"newuser\", \"password\": \"newpassword\"}"
+  docker exec -it app curl -X POST "http://localhost:8022/register" -H "Content-Type: application/json" -d "{\"username\": \"user2\", \"password\": \"123\"}"

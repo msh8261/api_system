@@ -90,17 +90,8 @@ def register(user: LoginRequest, db: Session = Depends(get_db)):
         # Hash the password
         logger.debug(f"Hashing the password for {user.username}.")
         hashed_password = pwd_context.hash(user.password)
-    except Exception as e:
-        logger.error(f"Error during getting user from db {user.username}: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to get user from db")
-
-    try:
         # Create a new user and store in the database
         db_user = User(username=user.username, password=hashed_password)
-    except Exception as e:
-        logger.error(f"Error during creating a new user {user.username}: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to create a new user")
-    try:
         logger.debug(f"Adding {user.username} to the database.")
         db.add(db_user)
         db.commit()
@@ -109,4 +100,4 @@ def register(user: LoginRequest, db: Session = Depends(get_db)):
         return {"message": "User registered successfully"}
     except Exception as e:
         logger.error(f"Error storing of user to the db {user.username}: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to store of user to the db")
+        raise HTTPException(status_code=500, detail="Failed to register user")

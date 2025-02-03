@@ -11,7 +11,5 @@ CREATE TABLE IF NOT EXISTS users (
 INSERT INTO users (username, password)
 VALUES ('test_user', '$2b$12$rAmQ/AWbhQZdaWrkA22KiuZnmPw1j8glx7ORGeA/Wm7i9Tjo59HlO');
 
--- UPDATE users
--- SET username = 'test_user', password = '$2b$12$rAmQ/AWbhQZdaWrkA22KiuZnmPw1j8glx7ORGeA/Wm7i9Tjo59HlO'
--- WHERE id = 1;
+
 

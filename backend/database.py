@@ -11,12 +11,14 @@ parent_dir_path = os.path.dirname(current_dir_path)
 sys.path.insert(0, parent_dir_path)
 
 
+from fastapi import HTTPException  # Add this import in database.py
 from sqlalchemy.orm import Session
 import pymongo
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import Column, Integer, String
+from sqlalchemy.sql import text  # Add this import
 from dotenv import load_dotenv
 from log import logger
 
@@ -29,9 +31,9 @@ mysql_user = os.getenv("mysql_user", "root")
 mysql_password = os.getenv("mysql_password", "")
 mysql_database = os.getenv("mysql_database", "chatbot")
 
-mongo_host = os.getenv("mongo_host")
-mongo_port = os.getenv("mongo_port")
-mongo_database = os.getenv("mongo_database")
+mongo_host = os.getenv("mongo_host", "localhost")  # Default to localhost
+mongo_port = os.getenv("mongo_port", "27017")  # Default MongoDB port
+mongo_database = os.getenv("mongo_database", "chatbot_db")  # Default
 
 
 # database URL
@@ -44,14 +46,21 @@ Base = declarative_base()
 engine = create_engine(DATABASE_URL)
 
 # Create sessionmaker
-Session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
-# MongoDB Connection
-mongo_client = pymongo.MongoClient(f"mongodb://{mongo_host}:{mongo_port}")
-mongo_db = mongo_client[mongo_database]
-logger.info("MongoDB connection established")
 
+def get_mongo_db():
+    """
+    Get a MongoDB database connection.
+    """
+    client = pymongo.MongoClient(f"mongodb://{mongo_host}:{mongo_port}")
+    db = client[mongo_database]
+    logger.info("MongoDB connection established")
+    try:
+        yield db
+    finally:
+        client.close()
 
 # create model
 class User(Base):
@@ -73,7 +82,7 @@ def get_db():
     """
     Get a SQLAlchemy session.
     """
-    db = Session()
+    db = SessionLocal()
     try:
         yield db
     finally:
@@ -82,7 +91,7 @@ def get_db():
 
 def test_db_connection(db: Session):
     try:
-        db.execute("SELECT 1")
+        db.execute(text("SELECT 1"))  # Explicitly use text()
         logger.info("Database connection is healthy.")
     except Exception as e:
         logger.error(f"Database connection failed: {e}")

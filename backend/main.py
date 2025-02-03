@@ -180,7 +180,7 @@ class LoginRequest(BaseModel):
 
 
 @app.post("/login")
-async def login_endpoint(request: LoginRequest):
+async def login_endpoint(request: LoginRequest, db: Session = Depends(get_db)):
     """
     Login endpoint to authenticate users.
 
@@ -192,7 +192,7 @@ async def login_endpoint(request: LoginRequest):
     """
     try:
         logger.debug(f"Login request received: {request}")
-        response = login(request)
+        response = login(request, db)
         logger.debug(f"Login response: {response}")
         return response
     except Exception as e:

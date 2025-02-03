@@ -163,3 +163,31 @@ hashed_password = pwd_context.hash("test123")
 print(hashed_password)
 print(login({"username": "test_user", "password": "test123"}))
 print(register({"username": "user1", "password": "user1"}))
+
+
+'''
+Challenges & Solutions
+High Latency in AI Model Response
+
+Challenge: The LLM response time was sometimes slow, causing delays in user interactions.
+Solution: Implemented asynchronous requests with asyncio and optimized caching using Redis to store recent responses and avoid redundant calls to the AI model.
+Handling Concurrent Requests Efficiently
+
+Challenge: The chatbot needed to serve multiple users simultaneously, creating a concurrency challenge.
+Solution: Used FastAPI’s async capabilities and deployed with Uvicorn & Gunicorn for efficient request handling. Also integrated Kafka for queuing background tasks, reducing API response time.
+Database Performance & Scalability
+
+Challenge: Storing and retrieving chat history from a MongoDB database led to performance issues under heavy load.
+Solution: Added database indexing, used Redis caching, and implemented pagination to optimize query performance.
+Security Concerns (Authentication & Rate Limiting)
+
+Challenge: Preventing unauthorized access and excessive API usage.
+Solution: Implemented OAuth2 with JWT authentication, enforced rate limiting with Redis, and enabled CORS policies to restrict unauthorized API access.
+Deployment & Load Balancing
+
+Challenge: Ensuring smooth deployment and handling traffic spikes.
+Solution: Deployed using Docker & Kubernetes, set up NGINX for load balancing, and used auto-scaling to handle traffic surges dynamically.
+Final Outcome
+The API handled thousands of concurrent users efficiently, reduced response latency, and ensured scalability & security. The system was deployed in a microservices architecture, allowing independent scaling of different components.
+
+'''

@@ -73,7 +73,7 @@
     <script>
         let ws;
         let token = '';
-        const apiUrl = window.location.hostname === 'localhost' ? "http://localhost:8022" : "https://app:8022"; // Use the correct hostname based on the environment
+        const apiUrl = window.location.hostname === 'localhost' ? "http://localhost:8022" : "http://app:8022";  // Adjust for Docker container communication
 
         // Switch to Register Form
         function showRegisterForm() {
@@ -106,7 +106,7 @@
                 }
 
                 const data = await response.json();
-                if (data.message === 'User created successfully') {
+                if (data.message === 'User registered successfully') {
                     document.getElementById("register-error").innerText = "Registration successful, please login.";
                     showLoginForm(); // Show login after successful registration
                 } else {
