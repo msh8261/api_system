@@ -20,8 +20,8 @@ from pydantic import BaseModel
 from fastapi import BackgroundTasks
 from fastapi import FastAPI, WebSocket, Depends, HTTPException, Request, Body
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import OAuth2PasswordBearer
 from fastapi import WebSocketDisconnect
+from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from dotenv import load_dotenv
 from log import logger
@@ -34,7 +34,7 @@ from backend.utils.kafka_producer import send_message_to_kafka_v1
 from backend.routers.users import login, register
 from backend.database import get_db, Session
 from pydantic import BaseModel
-from backend.database import init_db
+from backend.database import init_db, ChatHistory, User
 
 # Load environment variables from .env file
 load_dotenv()
@@ -57,8 +57,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 
 async def get_groq_response(prompt: str):
@@ -87,14 +85,16 @@ class ChatRequest(BaseModel):
 
 
 @app.post("/chat")
-async def chat(request: ChatRequest, background_tasks: BackgroundTasks):
+async def chat(
+    request: ChatRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
     """
     Chat endpoint to get a response from the GROQ LLM API.
 
     Args:
         request (ChatRequest): The request containing the user's message.
-        token (str): The access token for authentication.
-
     Returns:
         dict: The response from the API.
     """
@@ -104,12 +104,13 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks):
         # Convert the string to a Python dictionary
         parsed_data = json.loads(response)
         # Access the message content
-        response = parsed_data["choices"][0]["message"]["content"]
+        response = str(parsed_data["choices"][0]["message"]["content"])
         background_tasks.add_task(
             send_message_to_kafka_v1,
             kafka_topic,
             {"user_input": user_input, "response": response},
         )
+
         return {"response": response}
     except Exception as e:
         logger.error(f"Error in chat endpoint: {e}")
@@ -125,7 +126,11 @@ def verify_token(token: str):
 
 
 @app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket, background_tasks: BackgroundTasks):
+async def websocket_endpoint(
+    websocket: WebSocket,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
     # Extract the token from the query parameters
     token = websocket.query_params.get("token")
     logger.debug(f"Extracted token from the query parameters: {token}")
@@ -162,6 +167,20 @@ async def websocket_endpoint(websocket: WebSocket, background_tasks: BackgroundT
             )
             if answer:
                 await websocket.send_text(json.dumps(answer))
+                try:
+                    username = user.get("sub")
+                    u = db.query(User).filter(User.username == username).first()
+                    # Save chat history
+                    new_chat = ChatHistory(
+                        user_id=int(u.id), question=str(data), answer=str(answer)
+                    )
+                    db.add(new_chat)
+                    db.commit()
+                    db.refresh(new_chat)
+                    logger.info(f"Chat history added for user {u.id}")
+                except Exception as e:
+                    logger.error(f"Error saving chat history for user {u.id}: {str(e)}")
+
             else:
                 logger.error("No answer found, sending error message.")
                 await websocket.send_text(

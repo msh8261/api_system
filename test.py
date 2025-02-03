@@ -58,7 +58,14 @@ from datetime import datetime, timedelta
 from log import logger
 from dotenv import load_dotenv
 from passlib.context import CryptContext  # For password hashing
-from backend.database import User, get_db, get_user_from_db, Session, test_db_connection
+from backend.database import (
+    User,
+    get_db,
+    SessionLocal,
+    get_user_from_db,
+    Session,
+    test_db_connection,
+)
 
 from passlib.context import CryptContext
 import bcrypt
@@ -157,12 +164,39 @@ def register(user: Dict, db: Session = Depends(get_db)):
     #     raise HTTPException(status_code=500, detail="Failed to store of user to the db")
 
 
-print(bcrypt.__version__)
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-hashed_password = pwd_context.hash("test123")
-print(hashed_password)
-print(login({"username": "test_user", "password": "test123"}))
-print(register({"username": "user1", "password": "user1"}))
+# print(bcrypt.__version__)
+# pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# hashed_password = pwd_context.hash("test123")
+# print(hashed_password)
+# print(login({"username": "test_user", "password": "test123"}))
+# print(register({"username": "user1", "password": "user1"}))
+
+from jose import jwt
+
+# Your secret key and algorithm
+SECRET_KEY = "123"
+ALGORITHM = "HS256"  # Use the same algorithm as when the token was created
+
+
+def verify_token(token: str):
+    try:
+        # Decode the token
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = payload.get("sub")  # Extract the 'sub' (user_id) from the token
+        return user_id
+    except jwt.ExpiredSignatureError:
+        raise Exception("Token has expired")
+    except jwt.JWTError:
+        raise Exception("Invalid token")
+
+
+# Example usage
+token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1MSIsImV4cCI6MTczODU4NzgwOX0.jgl4lFJMPmnpqba2KshELHXh9s4dw22Lqrebt7VrXX0"
+username = verify_token(token)
+print("Extracted user_id:", username)
+# session = SessionLocal()
+# user = session.query(User).filter(User.username == username).first()
+# print("Extracted user_id:", user.id)
 
 
 """

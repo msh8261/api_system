@@ -12,12 +12,16 @@ sys.path.insert(0, parent_dir_path)
 
 
 from fastapi import HTTPException  # Add this import in database.py
+from fastapi import Depends
 from sqlalchemy.orm import Session
 import pymongo
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, ForeignKey, Text, DateTime
+from sqlalchemy.orm import relationship
+from datetime import datetime
+from jose import JWTError, jwt
 from sqlalchemy.sql import text  # Add this import
 from dotenv import load_dotenv
 from log import logger
@@ -38,6 +42,7 @@ mongo_database = os.getenv("mongo_database", "chatbot_db")  # Default
 
 # database URL
 DATABASE_URL = f"mysql+pymysql://{mysql_user}:{mysql_password}@{mysql_host}:{mysql_port}/{mysql_database}"
+
 
 # SQLAlchemy setup
 Base = declarative_base()
@@ -65,9 +70,23 @@ def get_mongo_db():
 # create model
 class User(Base):
     __tablename__ = "users"
+
     id = Column(Integer, primary_key=True, index=True)
-    username = Column(String, unique=True, index=True)
-    password = Column(String)
+    username = Column(String(255), unique=True, index=True)
+    password = Column(String(255))
+
+    chats = relationship("ChatHistory", back_populates="user")  # Link to ChatHistory
+
+
+class ChatHistory(Base):
+    __tablename__ = "chat_history"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))  # Associate with User
+    question = Column(Text, nullable=False)
+    answer = Column(Text, nullable=False)
+
+    user = relationship("User", back_populates="chats")  # Establish relationship
 
 
 def init_db():
